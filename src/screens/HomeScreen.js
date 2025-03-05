@@ -14,7 +14,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.buttonContainer}>
             <ButtonCeleris
               title="SE CONNECTER"
-              onPress={() => navigation.navigate('CreateReport')}
+              onPress={() => navigation.navigate('SignIn')}
               backgroundColor="#fff"
               Color="#1F2631"
               BorderColor="#1F2631"
