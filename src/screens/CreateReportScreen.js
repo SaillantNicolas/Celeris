@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ImageUploader from '../components/ImageUploader';
 import SignaturePad from '../components/SignaturePad';
 import ButtonCeleris from '../utils/ButtonCeleris';
+import AIImageAnalyzer from '../components/AIImageAnalyzer';
+import { reformulateTextWithGPT, analyzeProblemImagesWithGPT, analyzeActionImagesWithGPT } from '../services/openaiService';
 
 const CreateReportScreen = ({ navigation, route }) => {
   const intervention = route.params?.intervention || {};
@@ -17,13 +19,48 @@ const CreateReportScreen = ({ navigation, route }) => {
     actions: '',
     materials: '',
   });
+  
+  const [images, setImages] = useState([]);
+  const [reformulating, setReformulating] = useState(false);
 
   const handleChange = (name, value) => {
     setForm({ ...form, [name]: value });
   };
 
+  const handleProblemAnalysis = (analysisText) => {
+    handleChange('description', analysisText);
+  };
+
+  const handleActionAnalysis = (analysisText) => {
+    handleChange('actions', analysisText);
+  };
+
+  const handleImagesSelected = (selectedImages) => {
+    // Ajouter les images à la liste existante
+    setImages([...images, ...selectedImages]);
+  };
+
+  const handleReformulate = async (field) => {
+    if (!form[field] || form[field].trim() === '') {
+      alert(`Veuillez d'abord saisir du texte dans le champ.`);
+      return;
+    }
+    
+    setReformulating(true);
+    try {
+      const reformulatedText = await reformulateTextWithGPT(form[field]);
+      handleChange(field, reformulatedText);
+    } catch (error) {
+      console.error('Erreur lors de la reformulation:', error);
+      alert('Une erreur est survenue lors de la reformulation du texte.');
+    } finally {
+      setReformulating(false);
+    }
+  };
+
   const handleSubmit = () => {
     console.log('Données du rapport:', form);
+    console.log('Images:', images);
     // Ici, vous ajouterez la logique d'envoi du formulaire
     alert('Rapport créé avec succès!');
     navigation.goBack();
@@ -66,35 +103,79 @@ const CreateReportScreen = ({ navigation, route }) => {
           placeholder="Adresse complète"
         />
 
-        <Text style={styles.label}>Problème signalé:</Text>
-        <TextInput
-          style={styles.input}
-          value={form.issue}
-          onChangeText={(value) => handleChange('issue', value)}
-          placeholder="Description du problème"
-        />
-
         <Text style={styles.sectionTitle}>Détails de l'intervention</Text>
 
         <Text style={styles.label}>Description du problème constaté:</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={form.description}
-          onChangeText={(value) => handleChange('description', value)}
-          placeholder="Description détaillée"
-          multiline
-          numberOfLines={4}
-        />
+        <View style={styles.descriptionContainer}>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={form.description}
+            onChangeText={(value) => handleChange('description', value)}
+            placeholder="Description détaillée du problème avant intervention"
+            multiline
+            numberOfLines={4}
+          />
+          <View style={styles.aiTools}>
+            <AIImageAnalyzer 
+              onAnalysisComplete={handleProblemAnalysis}
+              onImagesSelected={handleImagesSelected}
+              analyzeFunction={analyzeProblemImagesWithGPT}
+              buttonText="Analyser le problème"
+              modalTitle="Analyser les images du problème?"
+            />
+            
+            <TouchableOpacity 
+              style={styles.reformulateButton} 
+              onPress={() => handleReformulate('description')}
+              disabled={reformulating}
+            >
+              {reformulating ? (
+                <ActivityIndicator size="small" color="#1F2631" />
+              ) : (
+                <>
+                  <Ionicons name="refresh" size={20} color="#1F2631" />
+                  <Text style={styles.buttonText}>Reformuler</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <Text style={styles.label}>Actions effectuées:</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={form.actions}
-          onChangeText={(value) => handleChange('actions', value)}
-          placeholder="Liste des actions réalisées"
-          multiline
-          numberOfLines={4}
-        />
+        <View style={styles.actionsContainer}>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={form.actions}
+            onChangeText={(value) => handleChange('actions', value)}
+            placeholder="Description des actions réalisées pendant l'intervention"
+            multiline
+            numberOfLines={4}
+          />
+          <View style={styles.aiTools}>
+            <AIImageAnalyzer 
+              onAnalysisComplete={handleActionAnalysis}
+              onImagesSelected={handleImagesSelected}
+              analyzeFunction={analyzeActionImagesWithGPT}
+              buttonText="Analyser les réparations"
+              modalTitle="Analyser les images des réparations?"
+            />
+            
+            <TouchableOpacity 
+              style={styles.reformulateButton} 
+              onPress={() => handleReformulate('actions')}
+              disabled={reformulating}
+            >
+              {reformulating ? (
+                <ActivityIndicator size="small" color="#1F2631" />
+              ) : (
+                <>
+                  <Ionicons name="refresh" size={20} color="#1F2631" />
+                  <Text style={styles.buttonText}>Reformuler</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <Text style={styles.label}>Matériels utilisés:</Text>
         <TextInput
@@ -107,7 +188,7 @@ const CreateReportScreen = ({ navigation, route }) => {
         />
 
         <Text style={styles.sectionTitle}>Photos</Text>
-        <ImageUploader />
+        <ImageUploader images={images} setImages={setImages} />
 
         <Text style={styles.sectionTitle}>Signature du client</Text>
         <SignaturePad onOK={(signature) => console.log('Signature:', signature)} />
@@ -127,6 +208,7 @@ const CreateReportScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  // Vos styles existants...
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
@@ -173,6 +255,28 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+  },
+  descriptionContainer: {
+    marginBottom: 15,
+  },
+  actionsContainer: {
+    marginBottom: 15,
+  },
+  aiTools: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 5,
+  },
+  reformulateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    padding: 8,
+    borderRadius: 4,
+  },
+  buttonText: {
+    marginLeft: 5,
+    color: '#1F2631',
   },
   buttonContainer: {
     marginVertical: 20,

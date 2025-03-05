@@ -74,6 +74,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textDecorationLine: 'underline',
   },
+  testButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 4,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: '#1F2631',
+    fontWeight: 'bold',
+  },
 });
 
 export default SignInPage;
