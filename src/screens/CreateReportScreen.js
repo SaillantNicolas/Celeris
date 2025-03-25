@@ -6,6 +6,8 @@ import SignaturePad from '../components/SignaturePad';
 import ButtonCeleris from '../utils/ButtonCeleris';
 import AIImageAnalyzer from '../components/AIImageAnalyzer';
 import { reformulateTextWithGPT, analyzeProblemImagesWithGPT, analyzeActionImagesWithGPT } from '../services/openaiService';
+import { getCurrentUser } from '../services/authClientService';
+import { createReport } from '../services/reportClientService';
 
 const CreateReportScreen = ({ navigation, route }) => {
   const intervention = route.params?.intervention || {};
@@ -22,6 +24,8 @@ const CreateReportScreen = ({ navigation, route }) => {
   
   const [images, setImages] = useState([]);
   const [reformulating, setReformulating] = useState(false);
+  const [signature, setSignature] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (name, value) => {
     setForm({ ...form, [name]: value });
@@ -58,12 +62,55 @@ const CreateReportScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Données du rapport:', form);
-    console.log('Images:', images);
-    // Ici, vous ajouterez la logique d'envoi du formulaire
-    alert('Rapport créé avec succès!');
-    navigation.goBack();
+  const handleSubmit = async () => {
+    // Validation basique
+    if (!form.clientName || !form.interventionDate || !form.address) {
+      alert('Veuillez remplir tous les champs obligatoires (nom du client, date d\'intervention, adresse).');
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      // Récupérer l'utilisateur connecté pour son ID
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        throw new Error('Vous devez être connecté pour créer un rapport.');
+      }
+      
+      // Préparer les données du rapport
+      const reportData = {
+        interventionId: route.params?.intervention?.id,
+        clientName: form.clientName,
+        interventionDate: form.interventionDate,
+        address: form.address,
+        issue: form.issue,
+        description: form.description,
+        actions: form.actions,
+        materials: form.materials,
+        images: images,
+        signature: signature
+      };
+      
+      console.log('Envoi du rapport:', reportData);
+      
+      // Envoyer les données au serveur
+      const result = await createReport(reportData);
+      console.log('Rapport créé avec succès:', result);
+      
+      alert('Rapport créé avec succès!');
+      navigation.goBack();
+    } catch (error) {
+      console.error('Erreur lors de la création du rapport:', error);
+      alert('Une erreur est survenue lors de la création du rapport: ' + error.toString());
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  
+  const handleSignature = (signatureUri) => {
+    console.log('Signature reçue:', signatureUri);
+    setSignature(signatureUri);
   };
 
   return (
@@ -191,17 +238,21 @@ const CreateReportScreen = ({ navigation, route }) => {
         <ImageUploader images={images} setImages={setImages} />
 
         <Text style={styles.sectionTitle}>Signature du client</Text>
-        <SignaturePad onOK={(signature) => console.log('Signature:', signature)} />
+        <SignaturePad onOK={handleSignature} />
 
         <View style={styles.buttonContainer}>
-          <ButtonCeleris
-            title="ENREGISTRER"
-            onPress={handleSubmit}
-            backgroundColor="#1F2631"
-            Color="#fff"
-            BorderColor="#fff"
-          />
-        </View>
+          {submitting ? (
+            <ActivityIndicator size="large" color="#1F2631" />
+          ) : (
+            <ButtonCeleris
+              title="ENREGISTRER"
+              onPress={handleSubmit}
+              backgroundColor="#1F2631"
+              Color="#fff"
+              BorderColor="#fff"
+            />
+          )}
+      </View>
       </ScrollView>
     </View>
   );

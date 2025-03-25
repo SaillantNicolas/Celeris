@@ -6,6 +6,9 @@ import CreateReportScreen from '../screens/CreateReportScreen';
 import SignUpPage from '../screens/SignUpPage';
 import SignInPage from '../screens/SignInPage';
 import DashboardScreen from '../screens/DashboardScreen';
+import ReportsListScreen from '../screens/ReportsListScreen';
+import ReportDetailScreen from '../screens/ReportDetailScreen';
+
 
 const Stack = createStackNavigator();
 
@@ -30,6 +33,14 @@ const AppNavigator = () => (
       <Stack.Screen 
         name="Dashboard"
         component={DashboardScreen} 
+        options={{ headerShown: false }}/>
+      <Stack.Screen 
+        name="ReportsList"
+        component={ReportsListScreen} 
+        options={{ headerShown: false }}/>
+      <Stack.Screen 
+        name="ReportDetail"
+        component={ReportDetailScreen} 
         options={{ headerShown: false }}/>
     </Stack.Navigator>
   </NavigationContainer>

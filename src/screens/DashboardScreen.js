@@ -119,6 +119,12 @@ const DashboardScreen = ({ navigation }) => {
               <Text style={styles.viewMoreText}>VOIR PLUS</Text>
             </TouchableOpacity>
           )}
+          <TouchableOpacity 
+            style={styles.reportsButton}
+            onPress={() => navigation.navigate('ReportsList')}
+          >
+            <Text style={styles.reportsButtonText}>Voir mes rapports</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
