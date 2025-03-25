@@ -1,24 +1,48 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { getUpcomingInterventions, getOngoingInterventions, getInterventionHistory } from '../services/interventionClientService';
+import { logoutUser } from '../services/authClientService';
 
 const DashboardScreen = ({ navigation }) => {
-  // Données fictives pour les interventions
-  const upcomingInterventions = [
-    { id: 1, client: 'M. FLORENTINI', time: '10:00 - 12:00', issue: 'Fuite d\'eau' },
-    { id: 2, client: 'Mme JULIONO', time: '15:00 - 16:30', issue: 'Fuite d\'eau' },
-  ];
+  const [upcomingInterventions, setUpcomingInterventions] = useState([]);
+  const [ongoingInterventions, setOngoingInterventions] = useState([]);
+  const [historyInterventions, setHistoryInterventions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const ongoingInterventions = [
-    { id: 3, client: 'Mme Dupont', address: 'avenue des roses, 06410 Biot' },
-    { id: 4, client: 'M. De-La-rivière', address: '13 Boulevard Napoléon III, 06200 Nice' },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const upcoming = await getUpcomingInterventions();
+        const ongoing = await getOngoingInterventions();
+        const history = await getInterventionHistory(5);
+        
+        setUpcomingInterventions(upcoming);
+        setOngoingInterventions(ongoing);
+        setHistoryInterventions(history);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
-  const historyInterventions = [
-    { id: 5, client: 'M. Legrand', address: 'Rue des tulipes, 06200 Nice' },
-    { id: 6, client: 'Mme Blanque', address: 'avenue des Fauvettes, 06410 Biot' },
-    { id: 7, client: 'M. Grégoire', address: 'Boulevard Carnot, 06400 Cannes' },
-  ];
+  const handleLogout = async () => {
+    await logoutUser();
+    navigation.navigate('Home');
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#1F2631" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -27,58 +51,74 @@ const DashboardScreen = ({ navigation }) => {
           <Ionicons name="menu" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tableau de bord</Text>
-        <TouchableOpacity onPress={() => {}}>
-          <Ionicons name="notifications" size={24} color="#fff" />
+        <TouchableOpacity onPress={handleLogout}>
+          <Ionicons name="log-out" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>À venir</Text>
-          {upcomingInterventions.map(item => (
-            <TouchableOpacity 
-              key={item.id} 
-              style={styles.card}
-              onPress={() => navigation.navigate('CreateReport', { intervention: item })}
-            >
-              <Text style={styles.clientName}>{item.client}</Text>
-              <Text style={styles.details}>{item.time} | {item.issue}</Text>
-            </TouchableOpacity>
-          ))}
+          {upcomingInterventions.length > 0 ? (
+            upcomingInterventions.map(item => (
+              <TouchableOpacity 
+                key={item.id} 
+                style={styles.card}
+                onPress={() => navigation.navigate('CreateReport', { intervention: item })}
+              >
+                <Text style={styles.clientName}>{item.client}</Text>
+                <Text style={styles.details}>
+                  {new Date(item.scheduled_date).toLocaleString()} | {item.issue}
+                </Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Aucune intervention à venir</Text>
+          )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Interventions en cours</Text>
-          {ongoingInterventions.map(item => (
-            <TouchableOpacity 
-              key={item.id} 
-              style={styles.card}
-              onPress={() => navigation.navigate('CreateReport', { intervention: item })}
-            >
-              <Text style={styles.clientName}>{item.client}</Text>
-              <Text style={styles.details}>{item.address}</Text>
-            </TouchableOpacity>
-          ))}
+          {ongoingInterventions.length > 0 ? (
+            ongoingInterventions.map(item => (
+              <TouchableOpacity 
+                key={item.id} 
+                style={styles.card}
+                onPress={() => navigation.navigate('CreateReport', { intervention: item })}
+              >
+                <Text style={styles.clientName}>{item.client}</Text>
+                <Text style={styles.details}>{item.address}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Aucune intervention en cours</Text>
+          )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Historique</Text>
-          {historyInterventions.map(item => (
+          {historyInterventions.length > 0 ? (
+            historyInterventions.map(item => (
+              <TouchableOpacity 
+                key={item.id} 
+                style={styles.card}
+                onPress={() => {}}
+              >
+                <Text style={styles.clientName}>{item.client}</Text>
+                <Text style={styles.details}>{item.address}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Aucun historique d'intervention</Text>
+          )}
+          {historyInterventions.length > 0 && (
             <TouchableOpacity 
-              key={item.id} 
-              style={styles.card}
+              style={styles.viewMoreButton}
               onPress={() => {}}
             >
-              <Text style={styles.clientName}>{item.client}</Text>
-              <Text style={styles.details}>{item.address}</Text>
+              <Text style={styles.viewMoreText}>VOIR PLUS</Text>
             </TouchableOpacity>
-          ))}
-          <TouchableOpacity 
-            style={styles.viewMoreButton}
-            onPress={() => {}}
-          >
-            <Text style={styles.viewMoreText}>VOIR PLUS</Text>
-          </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 

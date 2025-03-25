@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import ButtonCeleris from '../utils/ButtonCeleris';
+import { loginUser } from '../services/authClientService';
 
 const SignInPage = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = () => {
-    console.log('Tentative de connexion avec:', email);
-    // Temporaire faut remettre Home après !!!
-    navigation.navigate('Dashboard');
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await loginUser(email, password);
+      navigation.navigate('Dashboard');
+    } catch (error) {
+      Alert.alert('Erreur de connexion', error.toString());
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -22,6 +35,7 @@ const SignInPage = ({ navigation }) => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        editable={!loading}
       />
       <TextInput
         style={styles.input}
@@ -29,14 +43,21 @@ const SignInPage = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        editable={!loading}
       />
-      <ButtonCeleris
-        title="CONNEXION"
-        onPress={handleSignIn}
-        backgroundColor="#1F2631"
-        Color="#fff"
-        BorderColor="#fff"
-      />
+      
+      {loading ? (
+        <ActivityIndicator size="large" color="#1F2631" style={styles.loader} />
+      ) : (
+        <ButtonCeleris
+          title="CONNEXION"
+          onPress={handleSignIn}
+          backgroundColor="#1F2631"
+          Color="#fff"
+          BorderColor="#fff"
+        />
+      )}
+      
       <Text 
         style={styles.forgotPassword}
         onPress={() => console.log('Mot de passe oublié')}
