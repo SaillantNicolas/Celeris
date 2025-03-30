@@ -9,7 +9,7 @@ if (Platform.OS === 'android') {
   BASE_URL = 'http://10.0.2.2:3000/api';
 } else if (Platform.OS === 'ios') {
   // Pour le simulateur iOS, localhost fonctionne
-  BASE_URL = 'http://localhost:3000/api';
+  BASE_URL = 'http://192.168.1.34:3000/api';
 } else {
   // Pour les appareils physiques, utilisez votre adresse IP locale
   // IMPORTANT: Remplacez par votre propre adresse IP

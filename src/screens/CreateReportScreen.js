@@ -76,7 +76,8 @@ const CreateReportScreen = ({ navigation, route }) => {
       if (!currentUser) {
         throw new Error('Vous devez être connecté pour créer un rapport.');
       }
-      
+      const staticSignature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
       // Préparer les données du rapport
       const reportData = {
         interventionId: route.params?.intervention?.id,
@@ -88,7 +89,7 @@ const CreateReportScreen = ({ navigation, route }) => {
         actions: form.actions,
         materials: form.materials,
         images: images,
-        signature: signature
+        signature: staticSignature
       };
       
       console.log('Envoi du rapport:', reportData);
@@ -105,12 +106,6 @@ const CreateReportScreen = ({ navigation, route }) => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  
-  const handleSignature = (signatureUri) => {
-    console.log('Signature reçue:', signatureUri);
-    setSignature(signatureUri);
   };
 
   return (
@@ -238,7 +233,12 @@ const CreateReportScreen = ({ navigation, route }) => {
         <ImageUploader images={images} setImages={setImages} />
 
         <Text style={styles.sectionTitle}>Signature du client</Text>
-        <SignaturePad onOK={handleSignature} />
+        <SignaturePad 
+          onOK={(signatureData) => {
+            console.log("Signature reçue dans CreateReportScreen");
+            setSignature(signatureData);
+          }} 
+        />
 
         <View style={styles.buttonContainer}>
           {submitting ? (
