@@ -2,6 +2,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // Ajout de l'import manquant
+const fs = require('fs'); // Assurez-vous également que 'fs' est importé si ce n'est pas déjà fait
 const authService = require('./src/services/authService');
 const reportService = require('./src/services/reportService');
 const interventionService = require('./src/services/interventionService');
@@ -121,6 +123,40 @@ app.patch('/api/interventions/:id/status', authService.authenticateToken, async 
   }
 });
 
+const tempDir = path.join(__dirname, 'src/temp');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
+
+const pdfService = require('./src/services/pdfService');
+app.get('/api/reports/:id/pdf', authService.authenticateToken, async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    const userId = req.user.id;
+    
+    // Générer le PDF
+    const pdfPath = await pdfService.generateReportPDF(reportId, userId);
+    
+    // Envoyer le fichier
+    res.download(pdfPath, `rapport_${reportId}.pdf`, (err) => {
+      if (err) {
+        console.error('Error sending PDF:', err);
+      }
+      
+      // Supprimer le fichier temporaire après l'envoi
+      fs.unlink(pdfPath, (unlinkErr) => {
+        if (unlinkErr) {
+          console.error('Error deleting temporary PDF:', unlinkErr);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error downloading report as PDF:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 // Démarrer le serveur
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
