@@ -110,6 +110,39 @@ app.post('/api/interventions', authService.authenticateToken, async (req, res) =
   }
 });
 
+// Récupérer toutes les interventions
+app.get('/api/interventions/all', authService.authenticateToken, async (req, res) => {
+  try {
+    const interventions = await interventionService.getAllInterventions(req.user.id);
+    res.json(interventions);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Modifier une intervention
+app.patch('/api/interventions/:id', authService.authenticateToken, async (req, res) => {
+  try {
+    const result = await interventionService.updateIntervention(req.params.id, req.body, req.user.id);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Supprimer une intervention
+app.delete('/api/interventions/:id', authService.authenticateToken, async (req, res) => {
+  try {
+    console.log('Tentative de suppression de l\'intervention avec ID:', req.params.id);
+    const result = await interventionService.deleteIntervention(req.params.id, req.user.id);
+    res.json(result);
+  } catch (error) {
+    console.error('Erreur de suppression intervention:', error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
 app.patch('/api/interventions/:id/status', authService.authenticateToken, async (req, res) => {
   try {
     const result = await interventionService.updateInterventionStatus(

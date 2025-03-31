@@ -7,8 +7,8 @@ export const registerUser = async (userData) => {
     const response = await apiClient.post('/auth/register', userData);
     return response.data;
   } catch (error) {
-    console.error('Registration error:', error.response?.data || error.message);
-    throw error.response?.data?.error || 'Error during registration';
+    console.error('[registerUser] API Error:', error?.response?.data || error.message);
+    throw error?.response?.data?.error || 'Erreur de communication avec le serveur';
   }
 };
 

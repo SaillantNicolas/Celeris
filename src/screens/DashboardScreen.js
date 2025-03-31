@@ -1,40 +1,85 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getUpcomingInterventions, getOngoingInterventions, getInterventionHistory } from '../services/interventionClientService';
+import {
+  getUpcomingInterventions,
+  getOngoingInterventions,
+  getInterventionHistory,
+} from '../services/interventionClientService';
 import { logoutUser } from '../services/authClientService';
 
 const DashboardScreen = ({ navigation }) => {
-  const [upcomingInterventions, setUpcomingInterventions] = useState([]);
-  const [ongoingInterventions, setOngoingInterventions] = useState([]);
-  const [historyInterventions, setHistoryInterventions] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [ongoing, setOngoing] = useState([]);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const loadInterventions = async () => {
       try {
+        setLoading(true);
         const upcoming = await getUpcomingInterventions();
         const ongoing = await getOngoingInterventions();
-        const history = await getInterventionHistory(5);
-        
-        setUpcomingInterventions(upcoming);
-        setOngoingInterventions(ongoing);
-        setHistoryInterventions(history);
+        const history = await getInterventionHistory(10);
+
+        setUpcoming(upcoming);
+        setOngoing(ongoing);
+        setHistory(history);
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('Erreur chargement dashboard:', error);
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchData();
+
+    loadInterventions();
   }, []);
 
   const handleLogout = async () => {
     await logoutUser();
     navigation.navigate('Home');
   };
+
+  const renderSection = (title, data, emptyText, type) => (
+    <View style={styles.section}>
+      {data.slice(0, 5).map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.card}
+          onPress={() =>
+            navigation.navigate('CreateReport', { intervention: item })
+          }
+        >
+          <Text style={styles.clientName}>{item.client}</Text>
+          <Text style={styles.details}>
+            📍 {item.address} {'\n'}
+            🗓️ {new Date(item.scheduled_date).toLocaleString('fr-FR')}
+          </Text>
+        </TouchableOpacity>
+      ))}
+
+      {data.length > 5 && (
+        <TouchableOpacity
+          style={styles.viewMoreButton}
+          onPress={() => {
+            Alert.alert('À venir', `Voir toutes les interventions ${type}`);
+          }}
+        >
+          <Text style={styles.viewMoreText}>VOIR TOUT</Text>
+        </TouchableOpacity>
+      )}
+
+      {data.length === 0 && <Text style={styles.emptyText}>{emptyText}</Text>}
+    </View>
+  );
 
   if (loading) {
     return (
@@ -47,95 +92,37 @@ const DashboardScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => {}}>
-          <Ionicons name="menu" size={24} color="#fff" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Tableau de bord</Text>
-        <TouchableOpacity onPress={handleLogout}>
-          <Ionicons name="log-out" size={24} color="#fff" />
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          <Ionicons name="person-circle-outline" size={26} color="#fff" />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>À venir</Text>
-          {upcomingInterventions.length > 0 ? (
-            upcomingInterventions.map(item => (
-              <TouchableOpacity 
-                key={item.id} 
-                style={styles.card}
-                onPress={() => navigation.navigate('CreateReport', { intervention: item })}
-              >
-                <Text style={styles.clientName}>{item.client}</Text>
-                <Text style={styles.details}>
-                  {new Date(item.scheduled_date).toLocaleString()} | {item.issue}
-                </Text>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>Aucune intervention à venir</Text>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Interventions en cours</Text>
-          {ongoingInterventions.length > 0 ? (
-            ongoingInterventions.map(item => (
-              <TouchableOpacity 
-                key={item.id} 
-                style={styles.card}
-                onPress={() => navigation.navigate('CreateReport', { intervention: item })}
-              >
-                <Text style={styles.clientName}>{item.client}</Text>
-                <Text style={styles.details}>{item.address}</Text>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>Aucune intervention en cours</Text>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Historique</Text>
-          {historyInterventions.length > 0 ? (
-            historyInterventions.map(item => (
-              <TouchableOpacity 
-                key={item.id} 
-                style={styles.card}
-                onPress={() => {}}
-              >
-                <Text style={styles.clientName}>{item.client}</Text>
-                <Text style={styles.details}>{item.address}</Text>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>Aucun historique d'intervention</Text>
-          )}
-          {historyInterventions.length > 0 && (
-            <TouchableOpacity 
-              style={styles.viewMoreButton}
-              onPress={() => {}}
-            >
-              <Text style={styles.viewMoreText}>VOIR PLUS</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity 
-            style={styles.reportsButton}
-            onPress={() => navigation.navigate('ReportsList')}
-          >
-            <Text style={styles.reportsButtonText}>Voir mes rapports</Text>
-          </TouchableOpacity>
-        </View>
+        {renderSection('📆 Interventions à venir', upcoming, 'Aucune intervention à venir.', 'futures')}
+        {renderSection('⚙️ En cours', ongoing, 'Aucune intervention en cours.', 'en_cours')}
+        {renderSection('📜 Historique récent', history, 'Aucun historique récent.', 'passées')}
+        <TouchableOpacity 
+          style={[styles.reportsButton, { backgroundColor: '#1F2631' }]}
+          onPress={() => navigation.navigate('InterventionList')}
+        >
+          <Text style={[styles.reportsButtonText, { color: '#fff' }]}>
+            Gérer les interventions
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Home')}>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate('Home')}
+        >
           <Ionicons name="home" size={24} color="#1F2631" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton} onPress={() => {}}>
           <Ionicons name="search" size={24} color="#1F2631" />
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
           onPress={() => navigation.navigate('CreateReport')}
         >
@@ -144,7 +131,10 @@ const DashboardScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.footerButton} onPress={() => {}}>
           <Ionicons name="chatbubbles" size={24} color="#1F2631" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton} onPress={() => {}}>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate('Profile')}
+        >
           <Ionicons name="person" size={24} color="#1F2631" />
         </TouchableOpacity>
       </View>
@@ -209,6 +199,11 @@ const styles = StyleSheet.create({
   viewMoreText: {
     color: '#1F2631',
     fontWeight: 'bold',
+  },
+  emptyText: {
+    fontStyle: 'italic',
+    color: '#999',
+    paddingVertical: 5,
   },
   footer: {
     flexDirection: 'row',

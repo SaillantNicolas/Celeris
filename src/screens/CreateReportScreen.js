@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ImageUploader from '../components/ImageUploader';
 import SignaturePad from '../components/SignaturePad';
@@ -11,7 +11,7 @@ import { createReport } from '../services/reportClientService';
 
 const CreateReportScreen = ({ navigation, route }) => {
   const intervention = route.params?.intervention || {};
-  
+
   const [form, setForm] = useState({
     clientName: intervention.client || '',
     interventionDate: new Date().toISOString().slice(0, 10),
@@ -21,7 +21,7 @@ const CreateReportScreen = ({ navigation, route }) => {
     actions: '',
     materials: '',
   });
-  
+
   const [images, setImages] = useState([]);
   const [reformulating, setReformulating] = useState(false);
   const [signature, setSignature] = useState(null);
@@ -40,7 +40,6 @@ const CreateReportScreen = ({ navigation, route }) => {
   };
 
   const handleImagesSelected = (selectedImages) => {
-    // Ajouter les images à la liste existante
     setImages([...images, ...selectedImages]);
   };
 
@@ -49,7 +48,7 @@ const CreateReportScreen = ({ navigation, route }) => {
       alert(`Veuillez d'abord saisir du texte dans le champ.`);
       return;
     }
-    
+
     setReformulating(true);
     try {
       const reformulatedText = await reformulateTextWithGPT(form[field]);
@@ -63,24 +62,18 @@ const CreateReportScreen = ({ navigation, route }) => {
   };
 
   const handleSubmit = async () => {
-    // Validation basique
     if (!form.clientName || !form.interventionDate || !form.address) {
-      alert('Veuillez remplir tous les champs obligatoires (nom du client, date d\'intervention, adresse).');
+      alert('Veuillez remplir tous les champs obligatoires.');
       return;
     }
-    
+
     setSubmitting(true);
     try {
-      // Récupérer l'utilisateur connecté pour son ID
       const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        throw new Error('Vous devez être connecté pour créer un rapport.');
-      }
-      const staticSignature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+      if (!currentUser) throw new Error('Vous devez être connecté.');
 
-      // Préparer les données du rapport
       const reportData = {
-        interventionId: route.params?.intervention?.id,
+        interventionId: intervention.id,
         clientName: form.clientName,
         interventionDate: form.interventionDate,
         address: form.address,
@@ -88,21 +81,19 @@ const CreateReportScreen = ({ navigation, route }) => {
         description: form.description,
         actions: form.actions,
         materials: form.materials,
-        images: images,
-        signature: staticSignature
+        images,
+        signature
       };
-      
+
       console.log('Envoi du rapport:', reportData);
-      
-      // Envoyer les données au serveur
       const result = await createReport(reportData);
       console.log('Rapport créé avec succès:', result);
-      
-      alert('Rapport créé avec succès!');
+
+      alert('Rapport créé avec succès !');
       navigation.goBack();
     } catch (error) {
       console.error('Erreur lors de la création du rapport:', error);
-      alert('Une erreur est survenue lors de la création du rapport: ' + error.toString());
+      alert('Une erreur est survenue : ' + error.toString());
     } finally {
       setSubmitting(false);
     }
@@ -120,7 +111,7 @@ const CreateReportScreen = ({ navigation, route }) => {
 
       <ScrollView style={styles.content}>
         <Text style={styles.sectionTitle}>Informations client</Text>
-        
+
         <Text style={styles.label}>Nom du client:</Text>
         <TextInput
           style={styles.input}
@@ -153,21 +144,21 @@ const CreateReportScreen = ({ navigation, route }) => {
             style={[styles.input, styles.textArea]}
             value={form.description}
             onChangeText={(value) => handleChange('description', value)}
-            placeholder="Description détaillée du problème avant intervention"
+            placeholder="Description du problème"
             multiline
             numberOfLines={4}
           />
           <View style={styles.aiTools}>
-            <AIImageAnalyzer 
+            <AIImageAnalyzer
               onAnalysisComplete={handleProblemAnalysis}
               onImagesSelected={handleImagesSelected}
               analyzeFunction={analyzeProblemImagesWithGPT}
               buttonText="Analyser le problème"
-              modalTitle="Analyser les images du problème?"
+              modalTitle="Analyser les images du problème ?"
             />
-            
-            <TouchableOpacity 
-              style={styles.reformulateButton} 
+
+            <TouchableOpacity
+              style={styles.reformulateButton}
               onPress={() => handleReformulate('description')}
               disabled={reformulating}
             >
@@ -189,21 +180,21 @@ const CreateReportScreen = ({ navigation, route }) => {
             style={[styles.input, styles.textArea]}
             value={form.actions}
             onChangeText={(value) => handleChange('actions', value)}
-            placeholder="Description des actions réalisées pendant l'intervention"
+            placeholder="Actions réalisées"
             multiline
             numberOfLines={4}
           />
           <View style={styles.aiTools}>
-            <AIImageAnalyzer 
+            <AIImageAnalyzer
               onAnalysisComplete={handleActionAnalysis}
               onImagesSelected={handleImagesSelected}
               analyzeFunction={analyzeActionImagesWithGPT}
               buttonText="Analyser les réparations"
-              modalTitle="Analyser les images des réparations?"
+              modalTitle="Analyser les images des réparations ?"
             />
-            
-            <TouchableOpacity 
-              style={styles.reformulateButton} 
+
+            <TouchableOpacity
+              style={styles.reformulateButton}
               onPress={() => handleReformulate('actions')}
               disabled={reformulating}
             >
@@ -224,7 +215,7 @@ const CreateReportScreen = ({ navigation, route }) => {
           style={[styles.input, styles.textArea]}
           value={form.materials}
           onChangeText={(value) => handleChange('materials', value)}
-          placeholder="Liste des pièces et matériels"
+          placeholder="Liste des pièces"
           multiline
           numberOfLines={4}
         />
@@ -233,12 +224,20 @@ const CreateReportScreen = ({ navigation, route }) => {
         <ImageUploader images={images} setImages={setImages} />
 
         <Text style={styles.sectionTitle}>Signature du client</Text>
-        <SignaturePad 
-          onOK={(signatureData) => {
-            console.log("Signature reçue dans CreateReportScreen");
-            setSignature(signatureData);
-          }} 
+        <SignaturePad
+          onSignature={(sig) => {
+            console.log('[CreateReportScreen] Signature reçue depuis le pad ✅');
+            setSignature(sig);
+          }}
         />
+
+
+        {signature && (
+          <Image
+            source={{ uri: signature }}
+            style={{ width: 200, height: 100, borderWidth: 1, borderColor: '#000', marginTop: 10 }}
+          />
+        )}
 
         <View style={styles.buttonContainer}>
           {submitting ? (
@@ -252,18 +251,14 @@ const CreateReportScreen = ({ navigation, route }) => {
               BorderColor="#fff"
             />
           )}
-      </View>
+        </View>
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  // Vos styles existants...
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -273,15 +268,8 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
     paddingHorizontal: 20,
   },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
+  headerTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  content: { flex: 1, padding: 16 },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -289,12 +277,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#1F2631',
   },
-  label: {
-    fontSize: 14,
-    marginTop: 10,
-    marginBottom: 5,
-    color: '#555',
-  },
+  label: { fontSize: 14, marginTop: 10, marginBottom: 5, color: '#555' },
   input: {
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -303,21 +286,10 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
   },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  descriptionContainer: {
-    marginBottom: 15,
-  },
-  actionsContainer: {
-    marginBottom: 15,
-  },
-  aiTools: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 5,
-  },
+  textArea: { height: 100, textAlignVertical: 'top' },
+  descriptionContainer: { marginBottom: 15 },
+  actionsContainer: { marginBottom: 15 },
+  aiTools: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5 },
   reformulateButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -325,13 +297,8 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
   },
-  buttonText: {
-    marginLeft: 5,
-    color: '#1F2631',
-  },
-  buttonContainer: {
-    marginVertical: 20,
-  },
+  buttonText: { marginLeft: 5, color: '#1F2631' },
+  buttonContainer: { marginVertical: 20 },
 });
 
 export default CreateReportScreen;

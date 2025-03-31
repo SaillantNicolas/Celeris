@@ -50,3 +50,31 @@ export const updateInterventionStatus = async (id, status) => {
     throw error.response?.data?.error || 'Error updating intervention status';
   }
 };
+
+export const getAllInterventions = async () => {
+  const response = await apiClient.get('/interventions/all');
+  return response.data;
+};
+
+export const updateIntervention = async (data) => {
+  try {
+    const id = typeof data.id === 'object' ? data.id.id : data.id;
+    const { id: _, ...dataToSend } = data;
+    const response = await apiClient.patch(`/interventions/${id}`, dataToSend);
+    return response.data;
+  } catch (error) {
+    console.error('Update intervention error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const deleteIntervention = async (id) => {
+  try {
+    const interventionId = typeof id === 'object' && id !== null && id.id ? id.id : id;
+    const response = await apiClient.delete(`/interventions/${interventionId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Delete intervention error:', error.response?.data || error.message);
+    throw error;
+  }
+};

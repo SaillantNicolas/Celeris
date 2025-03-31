@@ -1,93 +1,60 @@
-import React, { useRef, useState } from 'react';
-import { Platform, View, Button, StyleSheet, Text, Alert } from 'react-native';
-import Signature from 'react-native-signature-canvas';
+// src/components/SignaturePad.js
 
-const SignaturePad = ({ onOK }) => {
+import React, { useRef } from 'react';
+import SignatureScreen from 'react-native-signature-canvas';
+import { View, StyleSheet, Button } from 'react-native';
+
+const SignaturePad = ({ onSignature }) => {
   const ref = useRef();
-  const [signed, setSigned] = useState(false);
 
-  if (Platform.OS === 'web') {
-    return (
-      <View style={styles.container}>
-        <Text>La signature n'est pas disponible sur le Web pour le moment.</Text>
-      </View>
-    );
-  }
-
-  // Cette fonction est modifiée pour s'assurer que la signature est correctement traitée
-  const handleSignature = (signature) => {
-    setSigned(true);
-    
-    // S'assurer que la signature commence par "data:"
-    if (signature && !signature.startsWith('data:')) {
-      signature = 'data:image/png;base64,' + signature;
-    }
-    
-    // Alerter l'utilisateur que la signature a été capturée
-    Alert.alert("Signature capturée", "La signature a été enregistrée.");
-    
-    // Appeler le callback avec la signature
-    if (typeof onOK === 'function') {
-      onOK(signature);
+  const handleOK = (signature) => {
+    console.log('[SignaturePad] Signature capturée ✅');
+    if (signature && typeof signature === 'string' && signature.startsWith('data:image')) {
+      onSignature(signature);
+    } else {
+      console.warn('[SignaturePad] Signature invalide ❌', signature);
     }
   };
 
-  const handleClear = () => {
-    ref.current.clearSignature();
-    setSigned(false);
+  const handleEnd = () => {
+    console.log('[SignaturePad] Fin de dessin ✍️');
+    ref.current?.readSignature(); // force capture dès que le dessin est terminé
   };
-
-  // Style spécifique pour s'assurer que le composant fonctionne correctement
-  const style = `.m-signature-pad {box-shadow: none; border: none; } 
-                .m-signature-pad--body {border: none;}
-                .m-signature-pad--footer {display: none; margin: 0px;}
-                body,html {
-                  height: 100%;
-                  width: 100%;
-                }`;
 
   return (
     <View style={styles.container}>
-      <Signature
+      <SignatureScreen
         ref={ref}
-        onOK={handleSignature}
-        descriptionText="Signature"
-        clearText="Effacer"
-        confirmText="Confirmer"
-        webStyle={style}
-        backgroundColor="white"
-        penColor="black"
-        minWidth={2}
-        maxWidth={3}
-        trimWhitespace={true}
+        onOK={handleOK}
+        onEnd={handleEnd} // ← capture automatique après dessin
+        autoClear={false}
         imageType="image/png"
+        descriptionText="Signez ici"
+        clearText="Effacer"
+        confirmText="Valider"
+        webStyle={`
+          .m-signature-pad {
+            box-shadow: none; 
+            border: 1px solid #ccc;
+          }
+          .m-signature-pad--footer {
+            display: none;
+          }
+        `}
       />
-      <View style={styles.controls}>
-        <Button title="Effacer" onPress={handleClear} />
-        {signed && <Text style={styles.signedText}>Signature enregistrée ✓</Text>}
-      </View>
+      {/* Optionnel : bouton pour capturer manuellement */}
+      {/* <Button title="Valider la signature" onPress={() => ref.current?.readSignature()} /> */}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 16,
     height: 300,
+    borderColor: '#ccc',
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    marginVertical: 16,
   },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  signedText: {
-    color: 'green',
-    fontWeight: 'bold',
-  }
 });
 
 export default SignaturePad;

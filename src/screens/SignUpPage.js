@@ -22,16 +22,19 @@ const SignUpPage = ({ navigation }) => {
     const handleSubmit = async () => {
         // Validation basique
         if (!form.email || !form.password || !form.name || !form.firstname) {
+            console.log("manque des champs");
             Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires');
             return;
         }
 
         if (form.password !== form.confirmPassword) {
+            console.log("mdp pas identique");
             Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
             return;
         }
 
         if (form.password.length < 8) {
+            console.log("mdp trop courts");
             Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 8 caractères');
             return;
         }
