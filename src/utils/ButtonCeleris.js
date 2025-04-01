@@ -1,7 +1,13 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { TouchableOpacity, Text, StyleSheet } from "react-native";
 
-const ButtonCeleris = ({ title, onPress, backgroundColor, Color = 'transparent', BorderColor = '#000' }) => {
+const ButtonCeleris = ({
+  title,
+  onPress,
+  backgroundColor,
+  Color = "transparent",
+  BorderColor = "#000",
+}) => {
   return (
     <TouchableOpacity
       style={[styles.button, { backgroundColor, borderColor: BorderColor }]}
@@ -18,12 +24,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   text: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

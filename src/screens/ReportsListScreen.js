@@ -1,9 +1,15 @@
-// Modification de src/screens/ReportsListScreen.js
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { getReports, downloadReportPDF } from '../services/reportClientService';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { getReports, downloadReportPDF } from "../services/reportClientService";
 
 const ReportsListScreen = ({ navigation }) => {
   const [reports, setReports] = useState([]);
@@ -20,8 +26,8 @@ const ReportsListScreen = ({ navigation }) => {
       const data = await getReports();
       setReports(data);
     } catch (error) {
-      console.error('Error fetching reports:', error);
-      Alert.alert('Erreur', 'Impossible de récupérer les rapports.');
+      console.error("Error fetching reports:", error);
+      Alert.alert("Erreur", "Impossible de récupérer les rapports.");
     } finally {
       setLoading(false);
     }
@@ -32,8 +38,8 @@ const ReportsListScreen = ({ navigation }) => {
       setDownloading(true);
       await downloadReportPDF(reportId);
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      Alert.alert('Erreur', 'Impossible de télécharger le PDF.');
+      console.error("Error downloading PDF:", error);
+      Alert.alert("Erreur", "Impossible de télécharger le PDF.");
     } finally {
       setDownloading(false);
     }
@@ -41,9 +47,11 @@ const ReportsListScreen = ({ navigation }) => {
 
   const renderReportItem = ({ item }) => (
     <View style={styles.reportItem}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.reportContent}
-        onPress={() => navigation.navigate('ReportDetail', { reportId: item.id })}
+        onPress={() =>
+          navigation.navigate("ReportDetail", { reportId: item.id })
+        }
       >
         <Text style={styles.clientName}>{item.client_name}</Text>
         <Text style={styles.reportDate}>
@@ -51,9 +59,9 @@ const ReportsListScreen = ({ navigation }) => {
         </Text>
         <Text style={styles.reportAddress}>{item.address}</Text>
       </TouchableOpacity>
-      
+
       <View style={styles.actionsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.downloadButton}
           onPress={() => handleDownloadPDF(item.id)}
           disabled={downloading}
@@ -107,42 +115,42 @@ const ReportsListScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1F2631',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#1F2631",
     paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
   },
   headerTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 16,
-    color: '#555',
+    color: "#555",
   },
   listContainer: {
     padding: 16,
   },
   reportItem: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    backgroundColor: "#fff",
     borderRadius: 8,
     marginBottom: 16,
     padding: 16,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -152,20 +160,20 @@ const styles = StyleSheet.create({
   },
   clientName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 4,
   },
   reportDate: {
     fontSize: 14,
-    color: '#555',
+    color: "#555",
     marginBottom: 4,
   },
   reportAddress: {
     fontSize: 14,
-    color: '#777',
+    color: "#777",
   },
   actionsContainer: {
-    justifyContent: 'center',
+    justifyContent: "center",
     marginLeft: 16,
   },
   downloadButton: {
