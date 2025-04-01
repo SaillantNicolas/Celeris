@@ -1,25 +1,39 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import ImageUploader from '../components/ImageUploader';
-import SignaturePad from '../components/SignaturePad';
-import ButtonCeleris from '../utils/ButtonCeleris';
-import AIImageAnalyzer from '../components/AIImageAnalyzer';
-import { reformulateTextWithGPT, analyzeProblemImagesWithGPT, analyzeActionImagesWithGPT } from '../services/openaiService';
-import { getCurrentUser } from '../services/authClientService';
-import { createReport } from '../services/reportClientService';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import ImageUploader from "../components/ImageUploader";
+import SignaturePad from "../components/SignaturePad";
+import ButtonCeleris from "../utils/ButtonCeleris";
+import AIImageAnalyzer from "../components/AIImageAnalyzer";
+import {
+  reformulateTextWithGPT,
+  analyzeProblemImagesWithGPT,
+  analyzeActionImagesWithGPT,
+} from "../services/openaiService";
+import { getCurrentUser } from "../services/authClientService";
+import { createReport } from "../services/reportClientService";
+import * as FileSystem from "expo-file-system";
 
 const CreateReportScreen = ({ navigation, route }) => {
   const intervention = route.params?.intervention || {};
 
   const [form, setForm] = useState({
-    clientName: intervention.client || '',
+    clientName: intervention.client || "",
     interventionDate: new Date().toISOString().slice(0, 10),
-    address: intervention.address || '',
-    issue: intervention.issue || '',
-    description: '',
-    actions: '',
-    materials: '',
+    address: intervention.address || "",
+    issue: intervention.issue || "",
+    description: "",
+    actions: "",
+    materials: "",
   });
 
   const [images, setImages] = useState([]);
@@ -32,11 +46,11 @@ const CreateReportScreen = ({ navigation, route }) => {
   };
 
   const handleProblemAnalysis = (analysisText) => {
-    handleChange('description', analysisText);
+    handleChange("description", analysisText);
   };
 
   const handleActionAnalysis = (analysisText) => {
-    handleChange('actions', analysisText);
+    handleChange("actions", analysisText);
   };
 
   const handleImagesSelected = (selectedImages) => {
@@ -44,7 +58,7 @@ const CreateReportScreen = ({ navigation, route }) => {
   };
 
   const handleReformulate = async (field) => {
-    if (!form[field] || form[field].trim() === '') {
+    if (!form[field] || form[field].trim() === "") {
       alert(`Veuillez d'abord saisir du texte dans le champ.`);
       return;
     }
@@ -54,8 +68,8 @@ const CreateReportScreen = ({ navigation, route }) => {
       const reformulatedText = await reformulateTextWithGPT(form[field]);
       handleChange(field, reformulatedText);
     } catch (error) {
-      console.error('Erreur lors de la reformulation:', error);
-      alert('Une erreur est survenue lors de la reformulation du texte.');
+      console.error("Erreur lors de la reformulation:", error);
+      alert("Une erreur est survenue lors de la reformulation du texte.");
     } finally {
       setReformulating(false);
     }
@@ -63,14 +77,26 @@ const CreateReportScreen = ({ navigation, route }) => {
 
   const handleSubmit = async () => {
     if (!form.clientName || !form.interventionDate || !form.address) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      alert("Veuillez remplir tous les champs obligatoires.");
       return;
     }
 
     setSubmitting(true);
     try {
       const currentUser = await getCurrentUser();
-      if (!currentUser) throw new Error('Vous devez être connecté.');
+      if (!currentUser) throw new Error("Vous devez être connecté.");
+
+      const base64Images = await Promise.all(
+        images.map(async (uri) => {
+          if (uri.startsWith("file://")) {
+            const base64 = await FileSystem.readAsStringAsync(uri, {
+              encoding: "base64",
+            });
+            return `data:image/jpeg;base64,${base64}`;
+          }
+          return uri;
+        })
+      );
 
       const reportData = {
         interventionId: intervention.id,
@@ -81,19 +107,19 @@ const CreateReportScreen = ({ navigation, route }) => {
         description: form.description,
         actions: form.actions,
         materials: form.materials,
-        images,
-        signature
+        images: base64Images,
+        signature,
       };
 
-      console.log('Envoi du rapport:', reportData);
+      console.log("Envoi du rapport:", reportData);
       const result = await createReport(reportData);
-      console.log('Rapport créé avec succès:', result);
+      console.log("Rapport créé avec succès:", result);
 
-      alert('Rapport créé avec succès !');
+      alert("Rapport créé avec succès !");
       navigation.goBack();
     } catch (error) {
-      console.error('Erreur lors de la création du rapport:', error);
-      alert('Une erreur est survenue : ' + error.toString());
+      console.error("Erreur lors de la création du rapport:", error);
+      alert("Une erreur est survenue : " + error.toString());
     } finally {
       setSubmitting(false);
     }
@@ -116,7 +142,7 @@ const CreateReportScreen = ({ navigation, route }) => {
         <TextInput
           style={styles.input}
           value={form.clientName}
-          onChangeText={(value) => handleChange('clientName', value)}
+          onChangeText={(value) => handleChange("clientName", value)}
           placeholder="Nom du client"
         />
 
@@ -124,7 +150,7 @@ const CreateReportScreen = ({ navigation, route }) => {
         <TextInput
           style={styles.input}
           value={form.interventionDate}
-          onChangeText={(value) => handleChange('interventionDate', value)}
+          onChangeText={(value) => handleChange("interventionDate", value)}
           placeholder="YYYY-MM-DD"
         />
 
@@ -132,7 +158,7 @@ const CreateReportScreen = ({ navigation, route }) => {
         <TextInput
           style={styles.input}
           value={form.address}
-          onChangeText={(value) => handleChange('address', value)}
+          onChangeText={(value) => handleChange("address", value)}
           placeholder="Adresse complète"
         />
 
@@ -143,7 +169,7 @@ const CreateReportScreen = ({ navigation, route }) => {
           <TextInput
             style={[styles.input, styles.textArea]}
             value={form.description}
-            onChangeText={(value) => handleChange('description', value)}
+            onChangeText={(value) => handleChange("description", value)}
             placeholder="Description du problème"
             multiline
             numberOfLines={4}
@@ -159,7 +185,7 @@ const CreateReportScreen = ({ navigation, route }) => {
 
             <TouchableOpacity
               style={styles.reformulateButton}
-              onPress={() => handleReformulate('description')}
+              onPress={() => handleReformulate("description")}
               disabled={reformulating}
             >
               {reformulating ? (
@@ -179,7 +205,7 @@ const CreateReportScreen = ({ navigation, route }) => {
           <TextInput
             style={[styles.input, styles.textArea]}
             value={form.actions}
-            onChangeText={(value) => handleChange('actions', value)}
+            onChangeText={(value) => handleChange("actions", value)}
             placeholder="Actions réalisées"
             multiline
             numberOfLines={4}
@@ -195,7 +221,7 @@ const CreateReportScreen = ({ navigation, route }) => {
 
             <TouchableOpacity
               style={styles.reformulateButton}
-              onPress={() => handleReformulate('actions')}
+              onPress={() => handleReformulate("actions")}
               disabled={reformulating}
             >
               {reformulating ? (
@@ -214,7 +240,7 @@ const CreateReportScreen = ({ navigation, route }) => {
         <TextInput
           style={[styles.input, styles.textArea]}
           value={form.materials}
-          onChangeText={(value) => handleChange('materials', value)}
+          onChangeText={(value) => handleChange("materials", value)}
           placeholder="Liste des pièces"
           multiline
           numberOfLines={4}
@@ -223,19 +249,26 @@ const CreateReportScreen = ({ navigation, route }) => {
         <Text style={styles.sectionTitle}>Photos</Text>
         <ImageUploader images={images} setImages={setImages} />
 
-        <Text style={styles.sectionTitle}>Signature du client</Text>
+        <Text style={styles.sectionTitle}>Signature</Text>
         <SignaturePad
           onSignature={(sig) => {
-            console.log('[CreateReportScreen] Signature reçue depuis le pad ✅');
+            console.log(
+              "[CreateReportScreen] Signature reçue depuis le pad ✅"
+            );
             setSignature(sig);
           }}
         />
 
-
         {signature && (
           <Image
             source={{ uri: signature }}
-            style={{ width: 200, height: 100, borderWidth: 1, borderColor: '#000', marginTop: 10 }}
+            style={{
+              width: 200,
+              height: 100,
+              borderWidth: 1,
+              borderColor: "#000",
+              marginTop: 10,
+            }}
           />
         )}
 
@@ -258,46 +291,50 @@ const CreateReportScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1F2631',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#1F2631",
     paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
   },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   content: { flex: 1, padding: 16 },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 20,
     marginBottom: 10,
-    color: '#1F2631',
+    color: "#1F2631",
   },
-  label: { fontSize: 14, marginTop: 10, marginBottom: 5, color: '#555' },
+  label: { fontSize: 14, marginTop: 10, marginBottom: 5, color: "#555" },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
   },
-  textArea: { height: 100, textAlignVertical: 'top' },
+  textArea: { height: 100, textAlignVertical: "top" },
   descriptionContainer: { marginBottom: 15 },
   actionsContainer: { marginBottom: 15 },
-  aiTools: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5 },
+  aiTools: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 5,
+  },
   reformulateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
     padding: 8,
     borderRadius: 4,
   },
-  buttonText: { marginLeft: 5, color: '#1F2631' },
+  buttonText: { marginLeft: 5, color: "#1F2631" },
   buttonContainer: { marginVertical: 20 },
 });
 

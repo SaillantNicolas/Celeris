@@ -1,24 +1,26 @@
-// src/components/SignaturePad.js
-
-import React, { useRef } from 'react';
-import SignatureScreen from 'react-native-signature-canvas';
-import { View, StyleSheet, Button } from 'react-native';
+import React, { useRef } from "react";
+import SignatureScreen from "react-native-signature-canvas";
+import { View, StyleSheet, Button } from "react-native";
 
 const SignaturePad = ({ onSignature }) => {
   const ref = useRef();
 
   const handleOK = (signature) => {
-    console.log('[SignaturePad] Signature capturée ✅');
-    if (signature && typeof signature === 'string' && signature.startsWith('data:image')) {
+    console.log("[SignaturePad] Signature capturée ✅");
+    if (
+      signature &&
+      typeof signature === "string" &&
+      signature.startsWith("data:image")
+    ) {
       onSignature(signature);
     } else {
-      console.warn('[SignaturePad] Signature invalide ❌', signature);
+      console.warn("[SignaturePad] Signature invalide ❌", signature);
     }
   };
 
   const handleEnd = () => {
-    console.log('[SignaturePad] Fin de dessin ✍️');
-    ref.current?.readSignature(); // force capture dès que le dessin est terminé
+    console.log("[SignaturePad] Fin de dessin ✍️");
+    ref.current?.readSignature();
   };
 
   return (
@@ -26,7 +28,7 @@ const SignaturePad = ({ onSignature }) => {
       <SignatureScreen
         ref={ref}
         onOK={handleOK}
-        onEnd={handleEnd} // ← capture automatique après dessin
+        onEnd={handleEnd}
         autoClear={false}
         imageType="image/png"
         descriptionText="Signez ici"
@@ -42,8 +44,6 @@ const SignaturePad = ({ onSignature }) => {
           }
         `}
       />
-      {/* Optionnel : bouton pour capturer manuellement */}
-      {/* <Button title="Valider la signature" onPress={() => ref.current?.readSignature()} /> */}
     </View>
   );
 };
@@ -51,7 +51,7 @@ const SignaturePad = ({ onSignature }) => {
 const styles = StyleSheet.create({
   container: {
     height: 300,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     marginVertical: 16,
   },

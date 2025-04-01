@@ -1,8 +1,15 @@
-// src/components/ImageUploader.js
-import React, { useState } from 'react';
-import { View, Button, Image, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from "react";
+import {
+  View,
+  Button,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Text,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 
 const ImageUploader = ({ images, setImages }) => {
   const pickImage = async () => {
@@ -13,7 +20,6 @@ const ImageUploader = ({ images, setImages }) => {
     });
 
     if (!result.canceled) {
-      // Ajouter l'image au tableau d'images
       setImages([...images, result.assets[0].uri]);
     }
   };
@@ -27,12 +33,12 @@ const ImageUploader = ({ images, setImages }) => {
   return (
     <View style={styles.container}>
       <Button title="Ajouter une image" onPress={pickImage} />
-      
+
       <ScrollView horizontal={true} style={styles.imageScroll}>
         {images.map((imageUri, index) => (
           <View key={index} style={styles.imageContainer}>
             <Image source={{ uri: imageUri }} style={styles.image} />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.removeButton}
               onPress={() => removeImage(index)}
             >
@@ -50,12 +56,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   imageScroll: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 16,
   },
   imageContainer: {
     marginRight: 10,
-    position: 'relative',
+    position: "relative",
   },
   image: {
     width: 150,
@@ -63,10 +69,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   removeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: -10,
     right: -10,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
   },
 });

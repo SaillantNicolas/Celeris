@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,11 +7,14 @@ import {
   Alert,
   TouchableOpacity,
   ActivityIndicator,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
-import { Ionicons } from '@expo/vector-icons';
-import { updateIntervention, deleteIntervention } from '../services/interventionClientService';
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  updateIntervention,
+  deleteIntervention,
+} from "../services/interventionClientService";
 
 const EditInterventionScreen = ({ route, navigation }) => {
   const { intervention } = route.params;
@@ -30,36 +33,44 @@ const EditInterventionScreen = ({ route, navigation }) => {
 
   const handleSubmit = async () => {
     if (!form.client || !form.address || !form.scheduled_date || !form.status) {
-      Alert.alert('Erreur', 'Tous les champs obligatoires doivent être remplis.');
+      Alert.alert(
+        "Erreur",
+        "Tous les champs obligatoires doivent être remplis."
+      );
       return;
     }
-  
+
     try {
       setLoading(true);
-  
-      const id = typeof form.id === 'object' && form.id !== null ? form.id.id : form.id;
-  
-      const scheduledDate = form.scheduled_date instanceof Date
-        ? form.scheduled_date
-        : new Date(form.scheduled_date);
-  
+
+      const id =
+        typeof form.id === "object" && form.id !== null ? form.id.id : form.id;
+
+      const scheduledDate =
+        form.scheduled_date instanceof Date
+          ? form.scheduled_date
+          : new Date(form.scheduled_date);
+
       const payload = {
         id,
         client: form.client,
         address: form.address,
-        issue: form.issue || '',
-        scheduled_date: scheduledDate.toISOString().slice(0, 19).replace('T', ' '),
+        issue: form.issue || "",
+        scheduled_date: scheduledDate
+          .toISOString()
+          .slice(0, 19)
+          .replace("T", " "),
         status: form.status,
       };
-  
-      console.log('[EditInterventionScreen] Payload envoyé :', payload);
-  
+
+      console.log("[EditInterventionScreen] Payload envoyé :", payload);
+
       await updateIntervention(payload);
-      Alert.alert('Succès', 'Intervention mise à jour.');
+      Alert.alert("Succès", "Intervention mise à jour.");
       navigation.goBack();
     } catch (error) {
-      console.error('[EditInterventionScreen] Erreur update:', error);
-      Alert.alert('Erreur', 'Impossible de mettre à jour cette intervention.');
+      console.error("[EditInterventionScreen] Erreur update:", error);
+      Alert.alert("Erreur", "Impossible de mettre à jour cette intervention.");
     } finally {
       setLoading(false);
     }
@@ -67,26 +78,38 @@ const EditInterventionScreen = ({ route, navigation }) => {
 
   const handleDelete = () => {
     Alert.alert(
-      'Confirmer la suppression',
-      'Êtes-vous sûr de vouloir supprimer cette intervention ?',
+      "Confirmer la suppression",
+      "Êtes-vous sûr de vouloir supprimer cette intervention ?",
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: "Annuler", style: "cancel" },
         {
-          text: 'Supprimer',
-          style: 'destructive',
+          text: "Supprimer",
+          style: "destructive",
           onPress: async () => {
             try {
-              setLoading(true);              
-              const id = typeof form.id === 'object' && form.id !== null ? form.id.id : form.id;
-              
-              console.log('[EditInterventionScreen] Tentative de suppression de l\'intervention avec ID:', id);
-              
+              setLoading(true);
+              const id =
+                typeof form.id === "object" && form.id !== null
+                  ? form.id.id
+                  : form.id;
+
+              console.log(
+                "[EditInterventionScreen] Tentative de suppression de l'intervention avec ID:",
+                id
+              );
+
               await deleteIntervention(id);
-              Alert.alert('Succès', 'Intervention supprimée avec succès.');
+              Alert.alert("Succès", "Intervention supprimée avec succès.");
               navigation.goBack();
             } catch (error) {
-              console.error('[EditInterventionScreen] Erreur suppression:', error);
-              Alert.alert('Erreur', 'Impossible de supprimer cette intervention: ' + error.message);
+              console.error(
+                "[EditInterventionScreen] Erreur suppression:",
+                error
+              );
+              Alert.alert(
+                "Erreur",
+                "Impossible de supprimer cette intervention: " + error.message
+              );
             } finally {
               setLoading(false);
             }
@@ -112,25 +135,28 @@ const EditInterventionScreen = ({ route, navigation }) => {
         <TextInput
           style={styles.input}
           value={form.client}
-          onChangeText={(val) => handleChange('client', val)}
+          onChangeText={(val) => handleChange("client", val)}
         />
 
         <Text style={styles.label}>Adresse</Text>
         <TextInput
           style={styles.input}
           value={form.address}
-          onChangeText={(val) => handleChange('address', val)}
+          onChangeText={(val) => handleChange("address", val)}
         />
 
         <Text style={styles.label}>Problème</Text>
         <TextInput
           style={styles.input}
           value={form.issue}
-          onChangeText={(val) => handleChange('issue', val)}
+          onChangeText={(val) => handleChange("issue", val)}
         />
 
         <Text style={styles.label}>Date d’intervention</Text>
-        <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
+        <TouchableOpacity
+          style={styles.input}
+          onPress={() => setShowDatePicker(true)}
+        >
           <Text>{form.scheduled_date.toLocaleString()}</Text>
         </TouchableOpacity>
         {showDatePicker && (
@@ -140,7 +166,7 @@ const EditInterventionScreen = ({ route, navigation }) => {
             display="default"
             onChange={(event, date) => {
               setShowDatePicker(false);
-              if (date) handleChange('scheduled_date', date);
+              if (date) handleChange("scheduled_date", date);
             }}
           />
         )}
@@ -149,7 +175,7 @@ const EditInterventionScreen = ({ route, navigation }) => {
         <View style={styles.pickerWrapper}>
           <Picker
             selectedValue={form.status}
-            onValueChange={(val) => handleChange('status', val)}
+            onValueChange={(val) => handleChange("status", val)}
           >
             <Picker.Item label="Prévu" value="scheduled" />
             <Picker.Item label="En cours" value="in_progress" />
@@ -166,7 +192,10 @@ const EditInterventionScreen = ({ route, navigation }) => {
               <Text style={styles.saveText}>Enregistrer</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDelete}
+            >
               <Text style={styles.deleteText}>Supprimer</Text>
             </TouchableOpacity>
           </>
@@ -177,54 +206,54 @@ const EditInterventionScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1F2631',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#1F2631",
     paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
   },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   content: { padding: 16 },
-  label: { marginTop: 15, marginBottom: 5, color: '#333', fontWeight: '600' },
+  label: { marginTop: 15, marginBottom: 5, color: "#333", fontWeight: "600" },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
   },
   pickerWrapper: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     marginBottom: 20,
   },
   saveButton: {
-    backgroundColor: '#1F2631',
+    backgroundColor: "#1F2631",
     padding: 12,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 10,
   },
   saveText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
   deleteButton: {
-    backgroundColor: '#d11a2a',
+    backgroundColor: "#d11a2a",
     padding: 12,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
   deleteText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 

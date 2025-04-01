@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+
 import {
   View,
   Text,
@@ -7,14 +9,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import {
   getUpcomingInterventions,
   getOngoingInterventions,
   getInterventionHistory,
-} from '../services/interventionClientService';
-import { logoutUser } from '../services/authClientService';
+} from "../services/interventionClientService";
+import { logoutUser } from "../services/authClientService";
 
 const DashboardScreen = ({ navigation }) => {
   const [upcoming, setUpcoming] = useState([]);
@@ -22,30 +24,32 @@ const DashboardScreen = ({ navigation }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadInterventions = async () => {
-      try {
-        setLoading(true);
-        const upcoming = await getUpcomingInterventions();
-        const ongoing = await getOngoingInterventions();
-        const history = await getInterventionHistory(10);
+  useFocusEffect(
+    useCallback(() => {
+      const loadInterventions = async () => {
+        try {
+          setLoading(true);
+          const upcoming = await getUpcomingInterventions();
+          const ongoing = await getOngoingInterventions();
+          const history = await getInterventionHistory(10);
 
-        setUpcoming(upcoming);
-        setOngoing(ongoing);
-        setHistory(history);
-      } catch (error) {
-        console.error('Erreur chargement dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+          setUpcoming(upcoming);
+          setOngoing(ongoing);
+          setHistory(history);
+        } catch (error) {
+          console.error("Erreur chargement dashboard:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    loadInterventions();
-  }, []);
+      loadInterventions();
+    }, [])
+  );
 
   const handleLogout = async () => {
     await logoutUser();
-    navigation.navigate('Home');
+    navigation.navigate("Home");
   };
 
   const renderSection = (title, data, emptyText, type) => (
@@ -55,13 +59,13 @@ const DashboardScreen = ({ navigation }) => {
           key={item.id}
           style={styles.card}
           onPress={() =>
-            navigation.navigate('CreateReport', { intervention: item })
+            navigation.navigate("CreateReport", { intervention: item })
           }
         >
           <Text style={styles.clientName}>{item.client}</Text>
           <Text style={styles.details}>
-            📍 {item.address} {'\n'}
-            🗓️ {new Date(item.scheduled_date).toLocaleString('fr-FR')}
+            📍 {item.address} {"\n"}
+            🗓️ {new Date(item.scheduled_date).toLocaleString("fr-FR")}
           </Text>
         </TouchableOpacity>
       ))}
@@ -70,7 +74,7 @@ const DashboardScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.viewMoreButton}
           onPress={() => {
-            Alert.alert('À venir', `Voir toutes les interventions ${type}`);
+            Alert.alert("À venir", `Voir toutes les interventions ${type}`);
           }}
         >
           <Text style={styles.viewMoreText}>VOIR TOUT</Text>
@@ -93,29 +97,42 @@ const DashboardScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Tableau de bord</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Ionicons name="person-circle-outline" size={26} color="#fff" />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
-        {renderSection('📆 Interventions à venir', upcoming, 'Aucune intervention à venir.', 'futures')}
-        {renderSection('⚙️ En cours', ongoing, 'Aucune intervention en cours.', 'en_cours')}
-        {renderSection('📜 Historique récent', history, 'Aucun historique récent.', 'passées')}
-        <TouchableOpacity 
-          style={[styles.reportsButton, { backgroundColor: '#1F2631' }]}
-          onPress={() => navigation.navigate('InterventionList')}
+        {renderSection(
+          "📆 Interventions à venir",
+          upcoming,
+          "Aucune intervention à venir.",
+          "futures"
+        )}
+        {renderSection(
+          "⚙️ En cours",
+          ongoing,
+          "Aucune intervention en cours.",
+          "en_cours"
+        )}
+        {renderSection(
+          "📜 Historique récent",
+          history,
+          "Aucun historique récent.",
+          "passées"
+        )}
+        <TouchableOpacity
+          style={styles.manageButton}
+          onPress={() => navigation.navigate("InterventionList")}
         >
-          <Text style={[styles.reportsButtonText, { color: '#fff' }]}>
-            Gérer les interventions
-          </Text>
+          <Text style={styles.manageButtonText}>Gérer les interventions</Text>
         </TouchableOpacity>
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.footerButton}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate("Home")}
         >
           <Ionicons name="home" size={24} color="#1F2631" />
         </TouchableOpacity>
@@ -124,7 +141,7 @@ const DashboardScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => navigation.navigate('CreateReport')}
+          onPress={() => navigation.navigate("CreateReport")}
         >
           <Ionicons name="add" size={32} color="#fff" />
         </TouchableOpacity>
@@ -133,7 +150,7 @@ const DashboardScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerButton}
-          onPress={() => navigation.navigate('Profile')}
+          onPress={() => navigation.navigate("Profile")}
         >
           <Ionicons name="person" size={24} color="#1F2631" />
         </TouchableOpacity>
@@ -145,21 +162,21 @@ const DashboardScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1F2631',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#1F2631",
     paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
   },
   headerTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   content: {
     flex: 1,
@@ -170,15 +187,15 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 15,
     borderRadius: 5,
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -186,50 +203,64 @@ const styles = StyleSheet.create({
   },
   clientName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   details: {
-    color: '#666',
+    color: "#666",
     marginTop: 5,
   },
   viewMoreButton: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 10,
   },
   viewMoreText: {
-    color: '#1F2631',
-    fontWeight: 'bold',
+    color: "#1F2631",
+    fontWeight: "bold",
   },
   emptyText: {
-    fontStyle: 'italic',
-    color: '#999',
+    fontStyle: "italic",
+    color: "#999",
     paddingVertical: 5,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    backgroundColor: "#fff",
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: "#eee",
   },
   footerButton: {
     padding: 10,
   },
   addButton: {
-    backgroundColor: '#1F2631',
+    backgroundColor: "#1F2631",
     width: 56,
     height: 56,
     borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
+  },
+  manageButton: {
+    backgroundColor: "#1F2631",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 30,
+  },
+
+  manageButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
