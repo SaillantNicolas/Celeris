@@ -123,7 +123,6 @@ exports.generateReportPDF = async (reportId, userId) => {
 
     // Images
     if (images.length > 0) {
-      doc.addPage();
       doc.font("Helvetica-Bold").fontSize(16).text("Photos");
       doc.moveDown();
 
